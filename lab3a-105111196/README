@@ -1,0 +1,20 @@
+NAME: Tejas Bhat, Aayush Patel 
+EMAIL: tejasgbhat@gmail.com, aayushpatel108@ucla.edu
+ID: 705199445, 105111196
+
+lab3a.c: C source module that analyzes a file system image and produces
+         a file with csv summaries of its overall findings
+
+Makefile: 
+    - default: compiles program with -Wall and -Wextra options to create
+               the executable lab3a
+    - dist: creates deliverable tarball
+    - clean: deletes executable and tarball created by other targets in Makefile 
+
+
+REFERENCES: 
+- http://www.nongnu.org/ext2-doc/ext2.html
+- http://www.science.unitn.it/~fiorella/guidelinux/tlk/node95.html
+- http://man7.org/linux/man-pages/man2/pwrite.2.html
+- https://www.tutorialspoint.com/c_standard_library/c_function_gmtime.htm
+- https://www.epochconverter.com/programming/c

@@ -1,0 +1,170 @@
+#Name: Aayush Patel
+#ID: 105111196
+#Email: aayushpatel108@ucla.edu
+
+Description of Files:
+
+lab2_add.c:
+
+•	takes a parameter for the number of parallel threads (--threads=#, default 1).
+•	takes a parameter for the number of iterations (--iterations=#, default 1).
+•	initializes a (long long) counter to zero
+•	notes the (high resolution) starting time for the run (using clock_gettime(3))
+•	starts the specified number of threads, each of which will use the above add function to
+
+	o	add 1 to the counter the specified number of times
+	o	add -1 to the counter the specified number of times
+	o	exit to re-join the parent thread
+
+•	wait for all threads to complete, and notes the (high resolution) ending time for the run
+•	prints to stdout a comma-separated-value (CSV) record including:
+
+	o	the name of the test (add-none for the most basic usage)
+	o	the number of threads (from --threads=)
+	o	the number of iterations (from --iterations=)
+	o	the total number of operations performed (threads x iterations x 2, the "x 2" factor because you add 1 first and then add -1)
+	o	the total run time (in nanoseconds)
+	o	the average time per operation (in nanoseconds).	
+	o	the total at the end of the run (0 if there were no conflicting updates)
+
+lab2_list.c
+
+•	takes a parameter for the number of parallel threads (--threads=#, default 1).
+•	takes a parameter for the number of iterations (--iterations=#, default 1).
+•	takes a parameter to enable (any combination of) optional critical section yields (--yield=[idl], i for insert, d for delete, l for lookups).
+•	initializes an empty list.
+•	creates and initializes (with random keys) the required number (threads x iterations) of list elements. Note that we do this before creating the threads so that this time is not included in our start-to-finish measurement. 		Similarly, if you free elements at the end of the test, do this after collecting the test execution times.
+•	notes the (high resolution) starting time for the run (using clock_gettime(3)).
+•	starts the specified number of threads.
+•	each thread:
+
+	o	starts with a set of pre-allocated and initialized elements (--	iterations=#)
+	o	inserts them all into a (single shared-by-all-threads) list
+	o	gets the list length
+	o	looks up and deletes each of the keys it had previously inserted
+	o	exits to re-join the parent thread
+
+•	waits for all threads to complete, and notes the (high resolution) ending time for the run.
+•	checks the length of the list to confirm that it is zero.
+•	prints to stdout a comma-separated-value (CSV) record including:
+
+	o	the name of the test, which is of the form: list-yieldopts-syncopts: where
+		yieldopts = {none, i,d,l,id,il,dl,idl}, syncopts = {none,s,m}
+	o	the number of threads (from --threads=)
+	o	the number of iterations (from --iterations=)
+	o	the number of lists (always 1 in this project)
+	o	the total number of operations performed: threads x iterations x 3 (insert + lookup + delete)
+	o	the total run time (in nanoseconds) for all threads
+	o	the average time per operation (in nanoseconds).
+
+
+Makefile: Makefile for the project that supports the following targets:
+
+	build ... (default target) compile all programs (with the -Wall and -Wextra options).
+	tests ... run all (over 200) specified test cases to generate results in CSV files. Note that the lab2_list program is expected to fail when running multiple 	threads without synchronization. Make sure that your Makefile 		continues executing 	despite such failures (e.g. put a '-' in front of commands that are expected to fail).
+	graphs ... use gnuplot(1) and the supplied data reduction scripts to generate the required graphs
+	dist ... create the deliverable tarball
+	clean ... delete all programs and output created by the Makefile
+
+Data
+
+	lab2_add.csv ... containing all of your results for all of the Part-1 tests.
+	lab2_list.csv ... containing all of your results for all of the Part-2 tests.
+
+Plots
+	lab2_add-1.png ... threads and iterations required to generate a failure (with and without yields)
+	lab2_add-2.png ... average time per operation with and without yields.
+	lab2_add-3.png ... average time per (single threaded) operation vs. the number of iterations.
+	lab2_add-4.png ... threads and iterations that can run successfully with yieldsunder each of the synchronization options.
+	lab2_add-5.png ... average time per (protected) operation vs. the number of threads.
+
+	lab2_list-1.png ... average time per (single threaded) unprotected operation vs. number of iterations (illustrating the correction of the per-operation cost for 	the list length).
+	lab2_list-2.png ... threads and iterations required to generate a failure (with and without yields).
+	lab2_list-3.png ... iterations that can run (protected) without failure.
+	lab2_list-4.png ... (length-adjusted) cost per operation vs the number of threads for the various synchronization options.
+
+Questions:
+
+QUESTION 2.1.1 - causing conflicts:
+Why does it take many iterations before errors are seen?
+Why does a significantly smaller number of iterations so seldom fail?
+
+
+	It takes many iterations before errors are seen because the probability of encountering
+	errors increases with increased number of iterations. With a high number of iterations,
+	it is very likely that a particular thread is interrupted before completing its designated
+	add function.
+
+	Likewise a significantly smaller number of iterations rarely fails for the
+	since a smaller number of iterations, means that the thread is much more 
+	likely to complete the entire add function before being interrupted.
+
+QUESTION 2.1.2 - cost of yielding:
+Why are the --yield runs so much slower?
+Where is the additional time going?
+Is it possible to get valid per-operation timings if we are using the --yield option?
+If so, explain how. If not, explain why not.
+
+	--yield runs are so much slower because each time a thread yields, it takes time
+	to switch to a new thread.
+
+	The additional time goes toward the OS switching between threads.
+
+	It's not possible to get valid per-operation timings with the --yield
+	option because we can't account for the amount of time taken by the yields.
+
+QUESTION 2.1.3 - measurement errors:
+Why does the average cost per operation drop with increasing iterations?
+If the cost per iteration is a function of the number of iterations, how do we know how many iterations to run (or what the "correct" cost is)?
+	 
+	The average cost per operation drops with increasing iterations because
+	the program's overhead is a fixed cost that doesn't necessarily change corresponding to the
+	number of iterations (and therefore number of operations). Therefore, an increased number 
+	of iterations "covers up" this overhead	more than a smaller number, thereby decreasing the 
+	average cost per iteration.
+
+	The plot created by lab2_add shows that the decrease in avg cost per operation with increased 
+	iterations eventually slows down, reaching a plateau. The point where this rate of change in the
+	decrease slows down could be considered the "correct" cost.
+
+
+QUESTION 2.1.4 - costs of serialization:
+Why do all of the options perform similarly for low numbers of threads?
+Why do the three protected operations slow down as the number of threads rises?
+
+	For a low number of threads, all of the options have a relatively low 
+	performance cost, so performance differences are hard to spot.
+
+	As the number of threads rise, the performance differences are magnified since there 
+	is a higher overhead associated with the synchronization options. Threads spend more time
+	waiting for locks to be released, so the operations slow down, no matter which option.
+
+QUESTION 2.2.1 - scalability of Mutex
+Compare the variation in time per mutex-protected operation vs the number of threads in Part-1 (adds) and Part-2 (sorted lists).
+Comment on the general shapes of the curves, and explain why they have this shape.
+Comment on the relative rates of increase and differences in the shapes of the curves, and offer an explanation for these differences.
+
+	In part 1, the time per mutex-protected operation increases initially before flattening out. This is likely because as the 
+	number of threads increases, any increase in overhead (threads waiting for locks to be released)
+	is offset by the increased number of iterations.
+
+	However, in part 2, the time per mutex-protected operation increases fairly linearly with increased numbers of threads. This is 
+	because as the number of threads increases, the amount of time that each thread spends blocked increases. 
+
+QUESTION 2.2.2 - scalability of spin locks
+Compare the variation in time per protected operation vs the number of threads for list operations protected by Mutex vs Spin locks. Comment on the general shapes of the curves, and explain why they have this shape.
+Comment on the relative rates of increase and differences in the shapes of the curves, and offer an explanation for these differences.
+
+	For a very low number of threads, spin locks cost less than mutex locks. However, with a larger
+	number of threads, spin locks cost much more more than mutexes. Both are fairly linear in both parts,
+	but the spin lock data is much noisier, likely due to the unreliability of the method. Spin locks
+	are expensive because CPU time is given to the spinning while loop. Meanwhile, with a mutex lock, 
+	the OS knows to switch threads instead of wasting time. Thus, as the overhead increases mutex locking is much 
+	more efficient.
+
+
+Sources:
+
+https://computing.llnl.gov/tutorials/pthreads/
+http://man7.org/linux/man-pages/man2/clock_gettime.2.html
+https://gcc.gnu.org/onlinedocs/gcc-4.4.3/gcc/Atomic-Builtins.html
