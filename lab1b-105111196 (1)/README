@@ -1,0 +1,24 @@
+# NAME: Aayush Patel
+# EMAIL: aayushpatel108@ucla.edu
+# UID: 105111196
+
+Description of Files:
+
+	lab1b-client.c: The client program. Takes user input from keyboard, passes to socket, and receives output from shell from the parent program. Has options for different port numbers, compression, and logging. 
+
+		Usage: ./lab1b-client --port=<port_number> [--compress --log=<filename>]
+
+	lab1b-server.c The server program. Takes information from socket, passes to child process running a shell, and passes the output back to the shell. Has options for different port numbers and compression. 
+
+		Usage: ./lab1b-server --port=<port_number> [--compress]
+
+	Makefile: Makefile for the project. Supports targets default, clean, and dist.
+
+	README: This file.
+
+Sources:
+
+	CCLE Discussion slides
+	https://www.zlib.net/zpipe.c
+	http://www.cs.rpi.edu/~moorthy/Courses/os98/Pgms/client.c
+	http://www.cs.rpi.edu/~moorthy/Courses/os98/Pgms/server.c
