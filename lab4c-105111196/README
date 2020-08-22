@@ -1,0 +1,13 @@
+NAME: Aayush Patel
+EMAIL: aayushpatel108@ucla.edu
+UID: 105111196
+
+lab4c_tcp.c: Source file for part 1 of the project. Runs on TCP server.
+
+lab4c_tls.c: Source file for part 2 of the project. Runs on TLS server.
+
+README: this file
+
+Makefile: Makefile for this project containing default, clean, and dist targets
+
+Source: TA slides (Alexandre Tiard), lab 4b, lab 1b

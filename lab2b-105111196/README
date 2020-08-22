@@ -1,0 +1,122 @@
+NAME: Aayush Patel
+EMAIL: aayushpatel108@ucla.edu
+ID: 105111196
+
+
+Description of Files:
+
+lab2_list.c
+
+•	takes a parameter for the number of parallel threads (--threads=#, default 1).
+•	takes a parameter for the number of iterations (--iterations=#, default 1).
+•	takes a parameter for the number of lists (--lists=#, default 1).
+•	takes a parameter for synchronization type (--sync=#, default none).
+•	takes a parameter to enable (any combination of) optional critical section yields (--yield=[idl], i for insert, d for delete, l for lookups).
+•	initializes a number empty lists specified by the user, making up a shared linked list.
+•	creates and initializes (with random keys) the required number (threads x iterations) of list elements. 
+•	notes the (high resolution) starting time for the run (using clock_gettime(3)).
+•	starts the specified number of threads.
+•	each thread:
+
+	o	starts with a set of pre-allocated and initialized elements (--	iterations=#)
+	o	inserts them all into a (single shared-by-all-threads) list
+	o	gets the list length
+	o	looks up and deletes each of the keys it had previously inserted
+	o	exits to re-join the parent thread
+
+•	waits for all threads to complete, and notes the (high resolution) ending time for the run.
+•	checks the length of the lists to confirm that they are zero.
+•	prints to stdout a comma-separated-value (CSV) record including:
+
+	o	the name of the test, which is of the form: list-yieldopts-syncopts: where
+		yieldopts = {none, i,d,l,id,il,dl,idl}, syncopts = {none,s,m}
+	o	the number of threads (from --threads=)
+	o	the number of iterations (from --iterations=)
+	o	the number of lists 
+	o	the total number of operations performed: threads x iterations x 3 (insert + lookup + delete)
+	o	the total run time (in nanoseconds) for all threads
+	o	the average time per operation (in nanoseconds).
+	o	the average wait time for locks per operation (in nanoseconds).
+
+Makefile: Makefile for the project that supports the following targets:
+
+	build ... (default target) compile all programs (with the -Wall and -Wextra options).
+	tests ... run all (over 200) specified test cases to generate results in CSV files. Note that the lab2_list program is expected to fail when running multiple 	threads without synchronization. Make sure that your Makefile 		continues executing 	despite such failures (e.g. put a '-' in front of commands that are expected to fail).
+	graphs ... use gnuplot(1) and the supplied data reduction scripts to generate the required graphs
+	dist ... create the deliverable tarball
+	profile .. create execution profile in profile.out
+	clean ... delete all programs and output created by the Makefile
+
+profile.out - execution profiling report showing where time was spent in the un-partitioned spin-lock implementation.
+
+lab2b_list.csv - contains all results for the tests run in this lab.
+
+lab2b_list.gp - GNUplot script to generate required plots from csv data
+
+Plots:
+	lab2b_1.png ... throughput vs number of threads for mutex and spin-lock synchronized list operations
+	lab2b_2.png ... mean time per mutex wait and mean time per operation for mutex-synchronized list operations
+	lab2b_3.png ... successful iterations vs. threads for each synchronization method.	lab2b_4.png ... throughput vs. number of threads for mutex synchronized partitioned lists.
+	lab2b_5.png ... throughput vs. number of threads for spin-lock-synchronized partitioned lists.
+
+README: this file
+
+
+
+Questions:
+
+QUESTION 2.3.1 - Cycles in the basic list implementation:
+Where do you believe most of the cycles are spent in the 1 and 2-thread list tests ?
+Why do you believe these to be the most expensive parts of the code?
+Where do you believe most of the time/cycles are being spent in the high-thread spin-lock tests?
+Where do you believe most of the time/cycles are being spent in the high-thread mutex tests?
+
+	For the 1 and 2-thread list tests, most of the cycles are spent on the list operations instead of synchronization. This is because in 1 and 2 thread scenarios, 
+	locks are released much more quickly on a per-thread basis, so less time is wasted waiting.
+
+	For high-thread spin-lock tests, most of the time is spent waiting while the locks are spinning. 
+
+	For high-thread mutex tests, most of the time is spent performing and/or waiting for the mutex locks. However, if the lists are very long, a similar amount of time may be spent on list operations.
+
+
+QUESTION 2.3.2 - Execution Profiling:
+Where (what lines of code) are consuming most of the cycles when the spin-lock version of the list exerciser is run with a large number of threads?
+Why does this operation become so expensive with large numbers of threads?
+
+	From profile.out, the lines of code that consume the most cycles were:
+
+	while(__sync_lock_test_and_set(&sync_locks[list_index], 1) == 1);
+	while(__sync_lock_test_and_set(&sync_locks[list_index], 1) == 1);
+
+	This operation becomes so expensive with larger numbers of threads because when many threads are competing to access critical sections, more time is spent spinning rather than 
+	actually performing the list operations, using up CPU cycles.
+
+
+QUESTION 2.3.3 - Mutex Wait Time:
+Look at the average time per operation (vs. # threads) and the average wait-for-mutex time (vs. #threads).
+Why does the average lock-wait time rise so dramatically with the number of contending threads?
+Why does the completion time per operation rise (less dramatically) with the number of contending threads?
+How is it possible for the wait time per operation to go up faster (or higher) than the completion time per operation?
+
+	The average lock-wait time rises so dramatically with the number of contending threads because the more threads compete for a shared resource, the more time is spent waiting and checking locks.
+
+	The completion time per operation rises with the number of contending threads because there is a higher overhead associated with waiting and switching between a high number of threads.
+
+	The wait time per operation goes up faster than the completion time per operation because for higher numbers of threads, synchronization becomes much more costly than list operations. 
+	Thus, since completion time contains both list operations and synchronization while lock-wait time includes just synchronization, lock-wait time will change more dramatically. Additionally,
+	this effect may be amplified by the fact that lock-wait time can be contributed to by multiple threads at a time (if multiple threads are waiting at the same time, which they generally are) while
+	completion time is just the time from start to end counted by the main thread.
+
+
+QUESTION 2.3.4 - Performance of Partitioned Lists
+Explain the change in performance of the synchronized methods as a function of the number of lists.
+Should the throughput continue increasing as the number of lists is further increased? If not, explain why not.
+It seems reasonable to suggest the throughput of an N-way partitioned list should be equivalent to the throughput of a single list with fewer (1/N) threads. Does this appear to be true in the above curves? If not, explain why not.
+
+	The performance of the synchronized methods improves with increasing number of lists.
+	
+	The throughput should continue to increase as the number of lists increases until it eventually reaches a point where contention between threads is very unlikely anyway, at which point adding more 
+	lists may not provide any additional benefit in terms of throughput.
+
+	After looking at the graphs, the suggestion that the throughput of an N-way partitioned list should be equivalent to a single list with 1/N threads seems to be relatively accurate. There are certainly 
+	some discrepancies likely due to other variables (server load, etc.) or OS-related complications (non-determinism), but the graphs do seem to confirm the general relationship.
